@@ -36,13 +36,18 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
     private val unresolvedReferences       = mutable.Map[String, Seq[DomainElement]]()
     private val unresolvedExtReferencesMap = mutable.Map[String, ExternalSourceElement]()
 
+    private var prefixes = GraphPrefixes()
+
     private val referencesMap = mutable.Map[String, DomainElement]()
 
     val dynamicGraphParser = new DynamicGraphParser(nodes, referencesMap, unresolvedReferences)
 
     def parse(document: YDocument, location: String): BaseUnit = {
-      val maybeMaps        = document.node.toOption[Seq[YMap]]
-      val maybeMap         = maybeMaps.flatMap(s => s.headOption)
+      val maybeMaps = document.node.toOption[Seq[YMap]]
+      val maybeMap  = maybeMaps.flatMap(s => s.headOption)
+
+      collectContext(maybeMap)
+
       val maybeMaybeObject = maybeMap.flatMap(parse)
 
       maybeMaybeObject match {
@@ -53,8 +58,23 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
       }
     }
 
+    private def collectContext(maybeMap: Option[YMap]): Unit = maybeMap.flatMap(_.key("@context")).foreach {
+      ctxEntry =>
+        val map = ctxEntry.value.as[YMap]
+
+        prefixes = prefixes.compact()
+
+        map.key("@base").foreach(e => prefixes = prefixes.withBase(e.value))
+        map.entries.partition(_.key.as[String] == "@base") match {
+          case (b, c) =>
+            b.headOption.foreach(e => prefixes = prefixes.withBase(e.value))
+
+            c.foreach(e => prefixes = prefixes.addPrefix(e.key, e.value))
+        }
+    }
+
     private def retrieveType(id: String, map: YMap): Option[Obj] = {
-      val stringTypes = ts(map, ctx, id)
+      val stringTypes = ts(map, ctx, id, prefixes)
       stringTypes.find(findType(_).isDefined) match {
         case Some(t) => findType(t)
         case None =>
@@ -66,25 +86,25 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
     private def parseList(id: String, listElement: Type, node: YMap): Seq[AmfElement] = {
       val buffer = ListBuffer[YNode]()
       node.entries.sortBy(_.key.as[String]).foreach { entry =>
-        if (entry.key.as[String].startsWith((Namespace.Rdfs + "_").iri())) {
+        if (prefixes.compactToFull(entry.key.as[String]).startsWith((Namespace.Rdfs + "_").iri())) {
           buffer += entry.value.as[Seq[YNode]].head
         }
       }
-      buffer.flatMap({ (n) =>
+      buffer.flatMap({ n =>
         listElement match {
-          case _ if listElement.dynamic => dynamicGraphParser.parseDynamicType(n.as[YMap])
+          case _ if listElement.dynamic => dynamicGraphParser.parseDynamicType(n.as[YMap], prefixes)
           case _: Obj                   => parse(n.as[YMap])
-          case _                        => try { Some(str(value(listElement, n))) } catch { case e: Exception => None }
+          case _                        => try { Some(str(value(listElement, n))) } catch { case _: Exception => None }
         }
       })
     }
 
     private def parse(map: YMap): Option[AmfObject] = { // todo fix uses
-      retrieveId(map, ctx)
+      retrieveId(map, ctx, prefixes)
         .flatMap(value => retrieveType(value, map).map(value2 => (value, value2)))
         .map {
           case (id, model) =>
-            val sources = retrieveSources(id, map)
+            val sources = retrieveSources(id, map, prefixes.isCompact)
 
             val instance = buildType(model)(annotations(nodes, sources, id))
             instance.withId(id)
@@ -102,9 +122,9 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
             }
 
             modelFields.foreach(f => {
-              val k = f.value.iri()
+              val k = prefixes.fullToCompact(f.value.iri())
               map.key(k) match {
-                case Some(entry) => traverse(instance, f, value(f.`type`, entry.value), sources, k)
+                case Some(entry) => traverse(instance, f, value(f.`type`, entry.value), sources, f.value.iri())
                 case _           =>
               }
             })
@@ -158,16 +178,16 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
 
     private def parseLinkableProperties(map: YMap, instance: DomainElement with Linkable): Unit = {
       map
-        .key(LinkableElementModel.TargetId.value.iri())
+        .key(prefixes.fullToCompact(LinkableElementModel.TargetId.value.iri()))
         .flatMap(entry => {
-          retrieveId(entry.value.as[Seq[YMap]].head, ctx)
+          retrieveId(entry.value.as[Seq[YMap]].head, ctx, prefixes)
         })
         .foreach { targetId =>
           setLinkTarget(instance, targetId)
         }
 
       map
-        .key(LinkableElementModel.Label.value.iri())
+        .key(prefixes.fullToCompact(LinkableElementModel.Label.value.iri()))
         .flatMap(entry => {
           entry.value
             .toOption[Seq[YNode]]
@@ -180,7 +200,7 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
 
     private def parseCustomProperties(map: YMap, instance: DomainElement): Unit = {
       val properties = map
-        .key(DomainElementModel.CustomDomainProperties.value.iri())
+        .key(prefixes.fullToCompact(DomainElementModel.CustomDomainProperties.value.iri()))
         .map(_.value.as[Seq[YNode]].map(value(Iri, _).as[YScalar].text))
         .getOrElse(Nil)
 
@@ -199,12 +219,12 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
               definition.id = uri
               extension.withDefinedBy(definition)
 
-              dynamicGraphParser.parseDynamicType(obj).foreach { pn =>
+              dynamicGraphParser.parseDynamicType(obj, prefixes).foreach { pn =>
                 extension.withId(pn.id)
                 extension.withExtension(pn)
               }
 
-              val sources = retrieveSources(extension.id, map)
+              val sources = retrieveSources(extension.id, map, prefixes.isCompact)
               extension.annotations ++= annotations(nodes, sources, extension.id)
 
               extension
@@ -236,7 +256,7 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
     private def traverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String) = {
       f.`type` match {
         case DataNodeModel => // dynamic nodes parsed here
-          dynamicGraphParser.parseDynamicType(node.as[YMap]) match {
+          dynamicGraphParser.parseDynamicType(node.as[YMap], prefixes) match {
             case Some(parsed) => instance.set(f, parsed, annotations(nodes, sources, key))
             case _            =>
           }
@@ -337,9 +357,8 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
     val value = node.tagType match {
       case YType.Map =>
         node.as[YMap].entries.find(_.key.as[String] == "@value") match {
-          case Some(entry) => {
+          case Some(entry) =>
             entry.value.as[YScalar].text.toDouble
-          }
           case _ => node.as[YScalar].text.toDouble
         }
       case _ => node.as[YScalar].text.toDouble
@@ -353,7 +372,7 @@ class GraphParser(platform: Platform)(implicit val ctx: ParserContext) extends G
     types.get(typeString).orElse(AMFDomainRegistry.findType(typeString))
   }
 
-  private def buildType(modelType: Obj): (Annotations) => AmfObject = {
+  private def buildType(modelType: Obj): Annotations => AmfObject = {
     AMFDomainRegistry.metadataRegistry.get(modelType.`type`.head.iri()) match {
       case Some(modelType: ModelDefaultBuilder) =>
         (annotations: Annotations) =>

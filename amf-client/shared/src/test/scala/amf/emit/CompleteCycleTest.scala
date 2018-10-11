@@ -674,6 +674,10 @@ class CompleteCycleTest extends FunSuiteCycleTests {
     cycle("enums.json", "enums.raml.jsonld", OasJsonHint, Amf, basePath + "enums/")
   }
 
+  test("Compact jsonld parsing") {
+    cycle("compact.jsonld", "compact.raml", AmfJsonHint, Raml, basePath + "compact/")
+  }
+
   /**
   * Please do not add more test for raml to raml or to jsonld in here. You can use Raml10CycleTestByDirectory or Raml08CycleTestByDirectory.
   * Check CycleTestByDirectory for information off how to use.

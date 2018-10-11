@@ -37,7 +37,7 @@ trait GraphParserHelpers {
     result
   }
 
-  protected def ts(map: YMap, ctx: ParserContext, id: String): Seq[String] = {
+  protected def ts(map: YMap, ctx: ParserContext, id: String, prefixes: GraphPrefixes): Seq[String] = {
     val documentType     = (Namespace.Document + "Document").iri()
     val fragmentType     = (Namespace.Document + "Fragment").iri()
     val moduleType       = (Namespace.Document + "Module").iri()
@@ -45,7 +45,11 @@ trait GraphParserHelpers {
     val documentTypesSet = Set(documentType, fragmentType, moduleType, unitType)
     map.key("@type") match {
       case Some(entry) =>
-        val allTypes         = entry.value.toOption[Seq[YNode]].getOrElse(Nil).flatMap(v => v.toOption[YScalar].map(_.text))
+        val allTypes = entry.value
+          .toOption[Seq[YNode]]
+          .getOrElse(Nil)
+          .flatMap(v => v.toOption[YScalar].map(_.text))
+          .map(prefixes.compactToFull)
         val nonDocumentTypes = allTypes.filter(t => !documentTypesSet.contains(t))
         val documentTypes    = allTypes.filter(t => documentTypesSet.contains(t)).sorted // we just use the fact that lexical order is correct
         nonDocumentTypes ++ documentTypes
@@ -56,18 +60,19 @@ trait GraphParserHelpers {
     }
   }
 
-  protected def retrieveId(map: YMap, ctx: ParserContext): Option[String] = {
+  protected def retrieveId(map: YMap, ctx: ParserContext, prefixes: GraphPrefixes): Option[String] = {
     map.key("@id") match {
-      case Some(entry) => Some(entry.value.as[YScalar].text)
+      case Some(entry) => Some(prefixes.base + entry.value.as[YScalar].text)
       case _ =>
         ctx.violation(s"No @id declaration on node $map", map)
         None
     }
   }
 
-  protected def retrieveSources(id: String, map: YMap): SourceMap = {
+  protected def retrieveSources(id: String, map: YMap, isCompact: Boolean = false): SourceMap = {
     map
       .key(DomainElementModel.Sources.value.iri())
+      .orElse(if (isCompact) map.key("smaps") else None)
       .flatMap { entry =>
         value(SourceMapModel, entry.value).toOption[YMap].map(parseSourceNode)
       }
