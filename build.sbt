@@ -188,6 +188,7 @@ lazy val tools = crossProject(JVMPlatform)
   .settings(settings: _*)
   .jvmSettings(
     libraryDependencies += "org.reflections" % "reflections" % "0.9.11",
+    libraryDependencies += "com.lihaoyi" %% "scalatags" % "0.6.7",
     mainClass in Compile := Some("amf.VocabularyExporter"),
     mainClass in assembly := Some("amf.VocabularyExporter"),
     assemblyOutputPath in assembly := file(s"./amf-${version.value}.jar")
