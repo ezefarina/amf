@@ -2,6 +2,9 @@
 
 pipeline {
   agent {
+    node {
+      label 'docker'
+    }
     dockerfile true
   }
   environment {
