@@ -2,33 +2,37 @@
 
 pipeline {
   agent {
-    node {
-      label 'docker'
-    }
     dockerfile true
   }
   environment {
     NEXUS = credentials('exchange-nexus')
   }
   stages {
-    stage('Test') {
+
+    stage("Testing") {
       steps {
-        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
-          withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sonarqube-official', passwordVariable: 'SONAR_SERVER_TOKEN', usernameVariable: 'SONAR_SERVER_URL']]) {
-            sh 'sbt -mem 4096 -Dfile.encoding=UTF-8 clean coverage test coverageReport'
-          }
-        }
-      }
-    }
-    stage('Sonar publish') {
-      steps {
-        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
-          script {
+        script {
+          buildpackBuild ([
+                  name: 'amf',
+                  buildRpm: false,
+                  uploadToNexus: false,
+          ]) {
+            stage('Test') {
+              steps {
+                wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
+                  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sonarqube-official', passwordVariable: 'SONAR_SERVER_TOKEN', usernameVariable: 'SONAR_SERVER_URL']]) {
+                    sh 'sbt -mem 4096 -Dfile.encoding=UTF-8 clean coverage test coverageReport'
+                  }
+                }
+              }
+            }
+
             sonarScan {}
           }
         }
       }
     }
+
     stage('Publish') {
       when {
         anyOf {
