@@ -117,7 +117,9 @@
                                       ],
                                       "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/web-api/end-points/%2Fresource/get/request/application%2Fjson/schema/property/p2/scalar/p2/a/scalar_1",
                                       "@type": [
-                                        "http://a.ml/vocabularies/data#Scalar"
+                                        "http://a.ml/vocabularies/data#Scalar",
+                                        "http://a.ml/vocabularies/data#Node",
+                                        "http://a.ml/vocabularies/document#DomainElement"
                                       ],
                                       "http://a.ml/vocabularies/data#value": [
                                         {
@@ -224,7 +226,9 @@
                               ],
                               "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/web-api/end-points/%2Fresource/get/request/application%2Fjson/schema/a/scalar_1",
                               "@type": [
-                                "http://a.ml/vocabularies/data#Scalar"
+                                "http://a.ml/vocabularies/data#Scalar",
+                                "http://a.ml/vocabularies/data#Node",
+                                "http://a.ml/vocabularies/document#DomainElement"
                               ],
                               "http://a.ml/vocabularies/data#value": [
                                 {
@@ -366,7 +370,9 @@
                   ],
                   "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/web-api/end-points/%2Fresource/get/a/scalar_1",
                   "@type": [
-                    "http://a.ml/vocabularies/data#Scalar"
+                    "http://a.ml/vocabularies/data#Scalar",
+                    "http://a.ml/vocabularies/data#Node",
+                    "http://a.ml/vocabularies/document#DomainElement"
                   ],
                   "http://a.ml/vocabularies/data#value": [
                     {
@@ -434,7 +440,9 @@
               ],
               "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/web-api/end-points/%2Fresource/a/scalar_1",
               "@type": [
-                "http://a.ml/vocabularies/data#Scalar"
+                "http://a.ml/vocabularies/data#Scalar",
+                "http://a.ml/vocabularies/data#Node",
+                "http://a.ml/vocabularies/document#DomainElement"
               ],
               "http://a.ml/vocabularies/data#value": [
                 {
@@ -690,7 +698,9 @@
                   ],
                   "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/declarations/types/MyType/property/p1/scalar/p1/a/scalar_1",
                   "@type": [
-                    "http://a.ml/vocabularies/data#Scalar"
+                    "http://a.ml/vocabularies/data#Scalar",
+                    "http://a.ml/vocabularies/data#Node",
+                    "http://a.ml/vocabularies/document#DomainElement"
                   ],
                   "http://a.ml/vocabularies/data#value": [
                     {
@@ -797,7 +807,9 @@
           ],
           "@id": "file://amf-client/shared/src/test/resources/upanddown/cycle/raml10/konst1/api.raml#/declarations/types/MyType/a/scalar_1",
           "@type": [
-            "http://a.ml/vocabularies/data#Scalar"
+            "http://a.ml/vocabularies/data#Scalar",
+            "http://a.ml/vocabularies/data#Node",
+            "http://a.ml/vocabularies/document#DomainElement"
           ],
           "http://a.ml/vocabularies/data#value": [
             {
