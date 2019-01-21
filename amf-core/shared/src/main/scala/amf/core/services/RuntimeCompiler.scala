@@ -20,6 +20,16 @@ trait RuntimeCompiler {
             ctx: Option[ParserContext],
             env: Environment = Environment(),
             parsingOptions: ParsingOptions = ParsingOptions()): Future[BaseUnit]
+
+  def buildAsReference(url: String,
+                       base: Context,
+                       mediaType: Option[String],
+                       vendor: Option[String],
+                       referenceKind: ReferenceKind,
+                       cache: Cache,
+                       ctx: Option[ParserContext],
+                       env: Environment = Environment(),
+                       parsingOptions: ParsingOptions = ParsingOptions()): Future[Option[BaseUnit]]
 }
 
 object RuntimeCompiler {
@@ -46,6 +56,31 @@ object RuntimeCompiler {
               case (parsed, plugin) =>
                 plugin.onFinishedParsingInvocation(url, parsed)
             }
+        }
+      case _ => throw new Exception("No registered runtime compiler")
+    }
+  }
+
+  def buildAsReference(url: String,
+                       mediaType: Option[String],
+                       vendor: Option[String],
+                       base: Context,
+                       referenceKind: ReferenceKind = UnspecifiedReference,
+                       cache: Cache,
+                       ctx: Option[ParserContext] = None,
+                       env: Environment = Environment(),
+                       parsingOptions: ParsingOptions = ParsingOptions()): Future[Option[BaseUnit]] = {
+    compiler match {
+      case Some(runtimeCompiler) =>
+        AMFPluginsRegistry.featurePlugins().foreach(_.onBeginParsingInvocation(url, mediaType))
+        runtimeCompiler.buildAsReference(url, base, mediaType, vendor, referenceKind, cache, ctx, env, parsingOptions) map {
+          case Some(parsedUnit) =>
+            AMFPluginsRegistry.featurePlugins().foldLeft(parsedUnit) {
+              case (parsed, plugin) =>
+                plugin.onFinishedParsingInvocation(url, parsed)
+            }
+            Some(parsedUnit)
+          case other => other
         }
       case _ => throw new Exception("No registered runtime compiler")
     }

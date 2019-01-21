@@ -11,10 +11,13 @@ import amf.core.exception.{CyclicReferenceException, UnsupportedMediaTypeExcepti
 import amf.core.model.document.{BaseUnit, ExternalFragment}
 import amf.core.model.domain.ExternalDomainElement
 import amf.core.parser.{
+  ErrorHandler,
   ParsedDocument,
   ParsedReference,
   ParserContext,
   RefContainer,
+  Reference,
+  ReferenceHandler,
   ReferenceKind,
   ReferenceResolutionResult,
   UnspecifiedReference
@@ -24,13 +27,7 @@ import amf.core.remote._
 import amf.core.services.RuntimeCompiler
 import amf.core.utils.Strings
 import amf.internal.environment.Environment
-import amf.plugins.features.validation.ParserSideValidations.{
-  CycleReferenceError,
-  InvalidCrossSpec,
-  UnresolvedReference,
-  UriSyntaxError,
-  InvalidFragmentRef
-}
+import amf.plugins.features.validation.ParserSideValidations._
 import org.yaml.model.YNode
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -82,6 +79,17 @@ class AMFCompiler(val rawUrl: String,
     if (context.hasCycles) failed(new CyclicReferenceException(context.history))
     else
       cache.getOrUpdate(location) { () =>
+        ExecutionLog.log(s"AMFCompiler#build: compiling $rawUrl")
+        compile()
+      }
+  }
+
+  // adding this method to avoid change the firm of build (some client use RuntimeCompiler)
+  def resolveAsReference(): Future[Option[BaseUnit]] = {
+//    println(s"history for ${location} is ${context.history.toString()} and\n isBeingParsed ${isBeingParsed} \nand values for f: ${cache.valuesFor(base.get.current).toString()}" )
+    if (context.hasCycles) failed(new CyclicReferenceException(context.history))
+    else
+      cache.getOrUpdateSynchronized(location, base) { () =>
         ExecutionLog.log(s"AMFCompiler#build: compiling $rawUrl")
         compile()
       }
@@ -240,6 +248,7 @@ class AMFCompiler(val rawUrl: String,
     val parsed: Seq[Future[Option[ParsedReference]]] = refs.toReferences
       .filter(_.isRemote)
       .map { link =>
+        println(s"go to resolve ref ${link.url} from ${root.location}")
         val nodes = link.refs.map(_.node)
         link.resolve(context, cache, ctx, env, nodes, domainPlugin.allowRecursiveReferences) flatMap {
           case ReferenceResolutionResult(_, Some(unit)) =>
@@ -304,29 +313,37 @@ object AMFCompiler {
   def init() {
     // We register ourselves as the Runtime compiler
     if (RuntimeCompiler.compiler.isEmpty) {
-      RuntimeCompiler.register(
-        (url: String,
-         base: Context,
-         mediaType: Option[String],
-         vendor: Option[String],
-         referenceKind: ReferenceKind,
-         cache: Cache,
-         ctx: Option[ParserContext],
-         env: Environment,
-         parsingOptions: ParsingOptions) => {
-          new AMFCompiler(url,
-                          base.platform,
-                          Some(base),
-                          mediaType,
-                          vendor,
-                          referenceKind,
-                          cache,
-                          ctx,
-                          env,
-                          parsingOptions).build()
-        })
+      RuntimeCompiler.register(Compiler)
     }
   }
+}
+
+object Compiler extends RuntimeCompiler {
+
+  override def build(url: String,
+                     base: Context,
+                     mediaType: Option[String],
+                     vendor: Option[String],
+                     referenceKind: ReferenceKind,
+                     cache: Cache,
+                     ctx: Option[ParserContext],
+                     env: Environment,
+                     parsingOptions: ParsingOptions): Future[BaseUnit] =
+    new AMFCompiler(url, base.platform, Some(base), mediaType, vendor, referenceKind, cache, ctx, env, parsingOptions)
+      .build()
+
+  override def buildAsReference(url: String,
+                                base: Context,
+                                mediaType: Option[String],
+                                vendor: Option[String],
+                                referenceKind: ReferenceKind,
+                                cache: Cache,
+                                ctx: Option[ParserContext],
+                                env: Environment,
+                                parsingOptions: ParsingOptions): Future[Option[BaseUnit]] =
+    new AMFCompiler(url, base.platform, Some(base), mediaType, vendor, referenceKind, cache, ctx, env, parsingOptions)
+      .resolveAsReference()
+
 }
 
 case class Root(parsed: ParsedDocument,

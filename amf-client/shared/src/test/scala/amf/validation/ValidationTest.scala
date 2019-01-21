@@ -3,15 +3,17 @@ package amf.validation
 import _root_.org.scalatest.AsyncFunSuite
 import amf._
 import amf.core.AMFSerializer
+import amf.core.benchmark.ExecutionLog
 import amf.core.emitter.RenderOptions
 import amf.core.model.document.Module
 import amf.core.model.domain.{ObjectNode, RecursiveShape}
 import amf.core.parser.{DefaultParserSideErrorHandler, UnhandledErrorHandler}
+import amf.core.remote.Syntax.Json
 import amf.core.remote._
 import amf.core.unsafe.PlatformSecrets
 import amf.core.validation.SeverityLevels
 import amf.facades.{AMFCompiler, Validation}
-import amf.plugins.document.webapi.Raml10Plugin
+import amf.plugins.document.webapi.{JsonSchemaPlugin, Raml10Plugin}
 import amf.plugins.document.webapi.resolution.pipelines.ValidationResolutionPipeline
 import amf.plugins.document.webapi.validation.AMFShapeValidations
 import amf.plugins.domain.shapes.models.ArrayShape
@@ -343,12 +345,31 @@ class ValidationTest extends AsyncFunSuite with PlatformSecrets {
   test("Numeric status codes in OAS responses") {
     for {
       validation <- Validation(platform)
-      doc <- AMFCompiler(productionPath + "/oas_numeric_resources.yaml",
-        platform,
-        OasYamlHint,
-        validation)
+      doc <- AMFCompiler(productionPath + "/oas_numeric_resources.yaml", platform, OasYamlHint, validation)
         .build()
       report <- validation.validate(doc, Oas20Profile)
+    } yield {
+      assert(report.conforms)
+    }
+  }
+
+  test("Test test") {
+    for {
+      validation <- Validation(platform).map(_.withEnabledValidation(false))
+      doc <- AMFCompiler(validationsPath + "/simple-json-refcycle/api.raml", platform, RamlYamlHint, validation)
+        .build()
+      report <- validation.validate(doc, Raml08Profile)
+    } yield {
+      assert(report.conforms)
+    }
+  }
+
+  test("Another test") {
+    for {
+      validation <- Validation(platform).map(_.withEnabledValidation(false))
+      doc <- AMFCompiler(validationsPath + "/complex-json-refcycle/api.raml", platform, RamlYamlHint, validation)
+        .build()
+      report <- validation.validate(doc, Raml08Profile)
     } yield {
       assert(report.conforms)
     }

@@ -9,6 +9,7 @@ import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 class ParsingOptions {
   private var amfJsonLdSerialization      = true
   private var baseUnitUrl: Option[String] = None
+  private var root: Boolean               = true
 
   /**
     * Parse specific AMF JSON-LD serialization
@@ -38,9 +39,13 @@ class ParsingOptions {
     this
   }
 
-
+  def notRoot(): ParsingOptions = {
+    root = false
+    this
+  }
   def isAmfJsonLdSerilization: Boolean = amfJsonLdSerialization
   def definedBaseUrl: Option[String]   = baseUnitUrl
+  def isRoot: Boolean                  = root
 }
 
 object ParsingOptions {

@@ -1,6 +1,7 @@
 package amf.core.parser
 
 import amf.core.benchmark.ExecutionLog
+import amf.core.client.ParsingOptions
 import amf.core.exception.CyclicReferenceException
 import amf.core.model.document._
 import amf.core.parser
@@ -36,16 +37,18 @@ case class Reference(url: String, refs: Seq[RefContainer]) extends PlatformSecre
     val kinds = refs.map(_.linkType)
     val kind  = if (kinds.distinct.size > 1) UnspecifiedReference else kinds.distinct.head
     try {
-      val res: Future[Future[ReferenceResolutionResult]] = RuntimeCompiler(url,
-                                                                           None,
-                                                                           None,
-                                                                           base,
-                                                                           kind,
-                                                                           cache,
-                                                                           Some(ctx),
-                                                                           env) map { eventualUnit =>
-        verifyMatchingKind(eventualUnit, kind, nodes, ctx)
-        Future(parser.ReferenceResolutionResult(None, Some(eventualUnit)))
+      val res: Future[Future[ReferenceResolutionResult]] = RuntimeCompiler.buildAsReference(url,
+                                                                                            None,
+                                                                                            None,
+                                                                                            base,
+                                                                                            kind,
+                                                                                            cache,
+                                                                                            Some(ctx),
+                                                                                            env) map {
+        case Some(eventualUnit) =>
+          verifyMatchingKind(eventualUnit, kind, nodes, ctx)
+          Future(parser.ReferenceResolutionResult(None, Some(eventualUnit)))
+        case _ => Future(ReferenceResolutionResult(None, None))
       } recover {
         case e: CyclicReferenceException if allowRecursiveRefs =>
           val fullUrl = e.history.last

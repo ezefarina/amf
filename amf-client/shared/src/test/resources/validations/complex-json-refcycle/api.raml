@@ -1,0 +1,40 @@
+#%RAML 0.8
+title: TapWiser API
+
+
+/authentication:
+ get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "$ref": "user.json"
+                  }
+                }
+              }
+
+/accounts:
+  get:
+    responses:
+        200:
+          body:
+            application/json:
+              schema: |
+                {
+                  "$ref": "account.json"
+                }
+/another:
+  get:
+    responses:
+        200:
+          body:
+            application/json:
+              schema: |
+                {
+                  "$ref": "another.json"
+                }
