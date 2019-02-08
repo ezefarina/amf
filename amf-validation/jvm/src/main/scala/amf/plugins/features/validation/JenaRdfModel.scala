@@ -4,6 +4,9 @@ import java.io.{PrintWriter, StringWriter, Writer => JavaWriter}
 
 import amf.core.rdf._
 import amf.core.vocabulary.Namespace
+import com.sun.org.apache.xerces.internal.utils.ObjectFactory
+import org.apache.jena.ext.xerces.impl.dv.{SchemaDVFactory, SecuritySupport}
+import org.apache.jena.ext.xerces.impl.dv.xs.SchemaDVFactoryImpl
 import org.apache.jena.graph.Graph
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.riot._
@@ -12,7 +15,7 @@ import org.apache.jena.sparql.util.Context
 import org.mulesoft.common.io.Output
 import org.topbraid.jenax.util.JenaUtil
 
-class JenaRdfModel(val model: Model = JenaUtil.createMemoryModel()) extends RdfModel {
+class JenaRdfModel(val model: Model = JenaUtilHelper.create()) extends RdfModel {
 
   override def addTriple(subject: String, predicate: String, objResource: String): RdfModel = {
     nodesCache = nodesCache - subject
@@ -175,5 +178,14 @@ class JenaRdfModel(val model: Model = JenaUtil.createMemoryModel()) extends RdfM
       case _ =>
         throw new Exception(s"Unsupported RDF media type $mediaType")
     }
+  }
+}
+
+object JenaUtilHelper {
+  def create(): Model = {
+    val loader = classOf[SchemaDVFactoryImpl].getClassLoader
+    Thread.currentThread().setContextClassLoader(loader)
+    val model = JenaUtil.createMemoryModel()
+    model
   }
 }
