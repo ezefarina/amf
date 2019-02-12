@@ -23,5 +23,6 @@ trait AMFValidationPlugin extends AMFPlugin {
                         profile: ProfileName,
                         validations: EffectiveValidations,
                         platform: Platform,
-                        env: Environment): Future[AMFValidationReport]
+                        env: Environment,
+                        resolved: Boolean = false): Future[AMFValidationReport]
 }

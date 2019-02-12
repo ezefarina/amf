@@ -126,12 +126,14 @@ class ParserSideValidationPlugin extends AMFFeaturePlugin with RuntimeValidator 
   override def validate(model: BaseUnit,
                         profileName: ProfileName,
                         messageStyle: MessageStyle,
-                        env: Environment): Future[AMFValidationReport] =
-    aggregateReport(model, profileName, messageStyle)
+                        env: Environment,
+                        resolved: Boolean): Future[AMFValidationReport] =
+    aggregateReport(model, profileName, messageStyle, resolved)
 
   final def aggregateReport(model: BaseUnit,
                             profileName: ProfileName,
-                            messageStyle: MessageStyle): Future[AMFValidationReport] = {
+                            messageStyle: MessageStyle,
+                            resolved: Boolean): Future[AMFValidationReport] = {
     val validations = EffectiveValidations().someEffective(parserSideValidationsProfile(profileName))
     // aggregating parser-side validations
     val results = model.parserRun match {

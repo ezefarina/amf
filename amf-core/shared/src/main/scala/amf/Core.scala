@@ -35,10 +35,21 @@ object Core extends PlatformSecrets {
                profileName: ProfileName,
                messageStyle: MessageStyle,
                env: Environment): ClientFuture[ValidationReport] =
-    Validator.validate(model, profileName, messageStyle, env)
+    Validator.validate(model, profileName, messageStyle, env, resolved = false)
 
   def validate(model: BaseUnit, profileName: ProfileName, messageStyle: MessageStyle): ClientFuture[ValidationReport] =
     validate(model, profileName, messageStyle, DefaultEnvironment())
+
+  def validateResolved(model: BaseUnit,
+                       profileName: ProfileName,
+                       messageStyle: MessageStyle,
+                       env: Environment): ClientFuture[ValidationReport] =
+    Validator.validate(model, profileName, messageStyle, env, resolved = true)
+
+  def validateResolved(model: BaseUnit,
+                       profileName: ProfileName,
+                       messageStyle: MessageStyle): ClientFuture[ValidationReport] =
+    validateResolved(model, profileName, messageStyle, DefaultEnvironment())
 
   def loadValidationProfile(url: String): ClientFuture[ProfileName] = Validator.loadValidationProfile(url)
 

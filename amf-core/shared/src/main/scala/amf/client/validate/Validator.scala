@@ -15,12 +15,14 @@ object Validator {
   def validate(model: BaseUnit,
                profileName: ProfileName,
                messageStyle: MessageStyle = AMFStyle,
-               env: Environment = DefaultEnvironment()): ClientFuture[ValidationReport] =
+               env: Environment = DefaultEnvironment(),
+               resolved: Boolean = false): ClientFuture[ValidationReport] =
     RuntimeValidator(
       model._internal,
       profileName,
       messageStyle,
-      env._internal
+      env._internal,
+      resolved
     ).map(report => report).asClient
 
   def loadValidationProfile(url: String): ClientFuture[ProfileName] =

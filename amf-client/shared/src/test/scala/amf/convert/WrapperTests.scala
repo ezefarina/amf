@@ -17,6 +17,7 @@ import amf.common.Diff
 import amf.core.exception.UnsupportedVendorException
 import amf.core.parser.Range
 import amf.core.remote.{Aml, Oas20, Raml10}
+import amf.core.resolution.pipelines.ResolutionPipeline
 import amf.core.vocabulary.Namespace
 import amf.core.vocabulary.Namespace.Xsd
 import amf.plugins.document.Vocabularies
@@ -1549,6 +1550,34 @@ trait WrapperTests extends AsyncFunSuite with Matchers with NativeOps {
       report <- AMF.validate(unit, RamlProfile, AMFStyle).asFuture
     } yield {
       assert(report.conforms)
+    }
+  }
+
+  test("Test validation with resolved model") {
+    val api =
+      """|#%RAML 1.0
+          |title: My API With Union Type
+          |traits:
+          |  secured:
+          |    usage: Apply this to any method that needs to be secured
+          |    description: Some requests require authentication.
+          |/test:
+          |  is:
+          |    - secured
+          |  get:
+          |    description: Some requests require authentication.""".stripMargin
+
+    for {
+      _         <- AMF.init().asFuture
+      unit      <- new RamlParser().parseStringAsync(api).asFuture
+      resolved  <- Future.successful(new Raml10Resolver().resolve(unit, ResolutionPipeline.EDITING_PIPELINE))
+      _         <- AMF.validateResolved(resolved, RamlProfile, AMFStyle).asFuture
+      generated <- AMF.raml10Generator().generateString(resolved).asFuture
+    } yield {
+      // With a normal resolution, used in normal validation, the extends field will disappears
+      val deltas = Diff.ignoreAllSpace.diff(api, generated)
+      if (deltas.nonEmpty) fail("Expected and golden are different: " + Diff.makeString(deltas))
+      else succeed
     }
   }
 

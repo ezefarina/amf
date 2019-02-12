@@ -53,7 +53,8 @@ trait RuntimeValidator {
   def validate(model: BaseUnit,
                profileName: ProfileName,
                messageStyle: MessageStyle,
-               env: Environment): Future[AMFValidationReport]
+               env: Environment,
+               resolved: Boolean): Future[AMFValidationReport]
 
   def reset()
 
@@ -83,7 +84,8 @@ trait RuntimeValidator {
 
   def aggregateReport(model: BaseUnit,
                       profileName: ProfileName,
-                      messageStyle: MessageStyle): Future[AMFValidationReport]
+                      messageStyle: MessageStyle,
+                      resolved: Boolean): Future[AMFValidationReport]
 }
 
 object RuntimeValidator {
@@ -115,13 +117,15 @@ object RuntimeValidator {
   def apply(model: BaseUnit,
             profileName: ProfileName,
             messageStyle: MessageStyle = AMFStyle,
-            env: Environment = Environment()): Future[AMFValidationReport] =
-    validator.validate(model, profileName, messageStyle, env)
+            env: Environment = Environment(),
+            resolved: Boolean = false): Future[AMFValidationReport] =
+    validator.validate(model, profileName, messageStyle, env, resolved)
 
   def aggregateReport(model: BaseUnit,
                       profileName: ProfileName,
-                      messageStyle: MessageStyle = AMFStyle): Future[AMFValidationReport] =
-    validator.aggregateReport(model, profileName, messageStyle)
+                      messageStyle: MessageStyle = AMFStyle,
+                      resolved: Boolean = false): Future[AMFValidationReport] =
+    validator.aggregateReport(model, profileName, messageStyle, resolved)
 
   def reset(): Unit = validator.reset()
 
