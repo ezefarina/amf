@@ -15,7 +15,7 @@ import org.apache.jena.sparql.util.Context
 import org.mulesoft.common.io.Output
 import org.topbraid.jenax.util.JenaUtil
 
-class JenaRdfModel(val model: Model = JenaUtilHelper.create()) extends RdfModel {
+class JenaRdfModel(val model: Model = JenaUtil.createMemoryModel()) extends RdfModel {
 
   override def addTriple(subject: String, predicate: String, objResource: String): RdfModel = {
     nodesCache = nodesCache - subject
@@ -178,14 +178,5 @@ class JenaRdfModel(val model: Model = JenaUtilHelper.create()) extends RdfModel 
       case _ =>
         throw new Exception(s"Unsupported RDF media type $mediaType")
     }
-  }
-}
-
-object JenaUtilHelper {
-  def create(): Model = {
-    val loader = classOf[SchemaDVFactoryImpl].getClassLoader
-    Thread.currentThread().setContextClassLoader(loader)
-    val model = JenaUtil.createMemoryModel()
-    model
   }
 }

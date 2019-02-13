@@ -20,21 +20,23 @@ object AMF {
     * Initializes AMF and all the registered plugins
     */
   def init(): Future[Unit] = {
-    AMFCompiler.init()
-    AMFSerializer.init()
-    val registeredSYamlPlugin                = SYamlSyntaxPlugin.init()
-    val registeredAMFGraphPlugin             = AMFGraphPlugin.init()
-    val parserSideValidation                 = new ParserSideValidationPlugin()
-    val registeredParserSideValidationPlugin = parserSideValidation.init()
-    Future
-      .sequence(Seq(registeredSYamlPlugin, registeredAMFGraphPlugin, registeredParserSideValidationPlugin))
-      .flatMap { _ =>
-        processInitializations(AMFPluginsRegistry.plugins.toSeq)
-      } map { _ =>
-      AMFPluginsRegistry.registerSyntaxPlugin(SYamlSyntaxPlugin)
-      AMFPluginsRegistry.registerDocumentPlugin(AMFGraphPlugin)
-      AMFPluginsRegistry.registerFeaturePlugin(parserSideValidation)
-    }
+//    AMFCompiler.init()
+//    AMFSerializer.init()
+//    val registeredSYamlPlugin                = SYamlSyntaxPlugin.init()
+//    val registeredAMFGraphPlugin             = AMFGraphPlugin.init()
+//    val parserSideValidation                 = new ParserSideValidationPlugin()
+//    val registeredParserSideValidationPlugin = parserSideValidation.init()
+
+    //    Future
+//      .sequence(Seq(registeredSYamlPlugin, registeredAMFGraphPlugin))//, registeredParserSideValidationPlugin))
+//      .flatMap { _ =>
+//        processInitializations(AMFPluginsRegistry.plugins.toSeq)
+//      } map { _ =>
+//      AMFPluginsRegistry.registerSyntaxPlugin(SYamlSyntaxPlugin)
+//      AMFPluginsRegistry.registerDocumentPlugin(AMFGraphPlugin)
+//      AMFPluginsRegistry.registerFeaturePlugin(parserSideValidation)
+//    }
+    Future.successful()
   }
 
   /**
@@ -48,7 +50,7 @@ object AMF {
     case feature: AMFPayloadValidationPlugin => AMFPluginsRegistry.registerPayloadValidationPlugin(feature)
   }
 
-  protected def processInitializations(plugins: Seq[AMFPlugin]): Future[Unit] = {
+  def processInitializations(plugins: Seq[AMFPlugin]): Future[Unit] = {
     if (plugins.isEmpty) {
       Future {}
     } else {

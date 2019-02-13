@@ -13,6 +13,7 @@ import amf.plugins.features.validation.emitters.ValidationRdfModelEmitter
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.jena.rdf.model.{Model, Resource}
+import org.apache.jena.sys.JenaSystem
 import org.apache.jena.util.FileUtils
 import org.topbraid.jenax.util.JenaUtil
 import org.topbraid.shacl.js.{JSScriptEngine, JSScriptEngineFactory, NashornScriptEngine, SHACLScriptEngineManager}
@@ -22,6 +23,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SHACLValidator extends amf.core.validation.core.SHACLValidator {
+
+  // HERE INIT TEST: REMOVE
+  JenaSystem.init()
 
   var functionUrl: Option[String]  = None
   var functionCode: Option[String] = None

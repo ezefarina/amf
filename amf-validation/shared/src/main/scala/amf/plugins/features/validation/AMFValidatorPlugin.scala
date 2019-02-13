@@ -28,21 +28,17 @@ import scala.concurrent.Future
 
 object AMFValidatorPlugin extends ParserSideValidationPlugin with PlatformSecrets {
 
-  override val ID = "AMF Validation"
+//  override val ID = "AMF Validation"
 
   override def init(): Future[AMFPlugin] = {
-    // Registering ourselves as the runtime validator
-    RuntimeValidator.register(AMFValidatorPlugin)
-    ExecutionLog.log("Register RDF framework")
-    platform.rdfFramework = Some(PlatformValidator.instance)
-    ExecutionLog.log(s"AMFValidatorPlugin#init: registering validation dialect")
-    AMLPlugin.registry.registerDialect(url, ValidationDialectText.text) map { _ =>
-      ExecutionLog.log(s"AMFValidatorPlugin#init: validation dialect registered")
+
+    Future {
+      platform.rdfFramework = Some(PlatformValidator.instance)
       this
     }
   }
 
-  override def dependencies() = Seq(SYamlSyntaxPlugin, AMLPlugin, AMFGraphPlugin)
+//  override def dependencies() = Seq()//SYamlSyntaxPlugin, AMLPlugin, AMFGraphPlugin)
 
   val url = "http://a.ml/dialects/profile.raml"
 
