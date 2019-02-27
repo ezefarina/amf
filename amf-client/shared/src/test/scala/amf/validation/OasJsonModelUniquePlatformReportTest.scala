@@ -39,5 +39,9 @@ class OasJsonModelUniquePlatformReportTest extends UniquePlatformReportGenTest {
     validate("duplicate-operation-ids.json", Some("duplicate-operation-ids.report"))
   }
 
+  test("file parameter with incorrect binding") {
+    validate("file-parameter/file-parameter-incorrect-binding.json", Some("file-parameter-incorrect-binding.report"))
+  }
+
   override val hint: Hint = OasJsonHint
 }
