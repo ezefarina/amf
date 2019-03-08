@@ -8,7 +8,7 @@ import amf.core.metamodel.domain.extensions.CustomDomainPropertyModel
 import amf.core.metamodel.domain.{DomainElementModel, ShapeModel}
 import amf.core.model.document.{BaseUnit, Document}
 import amf.core.model.domain.extensions.CustomDomainProperty
-import amf.core.model.domain.{AmfArray, AmfScalar}
+import amf.core.model.domain.{AmfArray, AmfScalar, DomainElement}
 import amf.core.parser.{Annotations, _}
 import amf.core.utils.{Lazy, Strings, TemplateUri}
 import amf.plugins.document.webapi.contexts.OasWebApiContext
@@ -21,7 +21,7 @@ import amf.plugins.document.webapi.parser.spec.declaration.{AbstractDeclarations
 import amf.plugins.document.webapi.parser.spec.domain._
 import amf.plugins.document.webapi.vocabulary.VocabularyMappings
 import amf.plugins.domain.shapes.models.ExampleTracking.tracking
-import amf.plugins.domain.shapes.models.{CreativeWork, NodeShape}
+import amf.plugins.domain.shapes.models.{CreativeWork, FileShape, NodeShape}
 import amf.plugins.domain.webapi.metamodel.security.{OAuth2SettingsModel, ParametrizedSecuritySchemeModel, ScopeModel}
 import amf.plugins.domain.webapi.metamodel.{EndPointModel, _}
 import amf.plugins.domain.webapi.models._
@@ -285,6 +285,14 @@ abstract class OasDocumentParser(root: Root)(implicit val ctx: OasWebApiContext)
           entries += entry
           parameters = parameters.add(OasParametersParser(entry.value.as[Seq[YNode]], endpoint.id).parse())
         }
+      val fileParameterIsDefined = parameters.getAll
+        .exists {
+          case param: Parameter =>
+            param.schema.isInstanceOf[FileShape]
+          case payload: Payload if payload.schema.isInstanceOf[NodeShape] =>
+            payload.schema.asInstanceOf[NodeShape].properties.exists(_.range.isInstanceOf[FileShape])
+          case _ => false
+        }
 
       // This is because there may be complex path parameters coming from RAML1
       map.key("uriParameters".asOasExtension).foreach { entry =>
@@ -343,7 +351,7 @@ abstract class OasDocumentParser(root: Root)(implicit val ctx: OasWebApiContext)
         entries => {
           val operations = mutable.ListBuffer[Operation]()
           entries.foreach { entry =>
-            operations += OperationParser(entry, endpoint.withOperation).parse()
+            operations += OperationParser(entry, endpoint.withOperation, fileParameterIsDefined).parse()
           }
           endpoint.set(EndPointModel.Operations, AmfArray(operations))
         }
@@ -451,7 +459,7 @@ abstract class OasDocumentParser(root: Root)(implicit val ctx: OasWebApiContext)
     }
   }
 
-  case class OperationParser(entry: YMapEntry, producer: String => Operation) {
+  case class OperationParser(entry: YMapEntry, producer: String => Operation, fileParameterIsDefined: Boolean) {
     def parse(): Operation = {
 
       val operation = producer(ScalarNode(entry.key).string().value.toString).add(Annotations(entry))
@@ -499,9 +507,40 @@ abstract class OasDocumentParser(root: Root)(implicit val ctx: OasWebApiContext)
         }
       )
 
-      RequestParser(map, () => operation.withRequest())
-        .parse()
-        .map(operation.set(OperationModel.Request, _))
+      val maybeRequest = RequestParser(map, () => operation.withRequest()).parse()
+      maybeRequest.map(operation.set(OperationModel.Request, _))
+
+      val validForFileParameters = operation.accepts.exists(
+        consumes =>
+          consumes.value() == "multipart/form-data" ||
+            consumes.value() == "application/x-www-form-urlencoded")
+
+      if (fileParameterIsDefined && !validForFileParameters) {
+        ctx.violation(
+          InvalidConsumesWithFileParameter,
+          operation.id,
+          "consumes must be either 'multipart/form-data', 'application/x-www-form-urlencoded', or both when a file parameter is present",
+          map.key("consumes").getOrElse(map)
+        )
+      } else if (!validForFileParameters) {
+        maybeRequest.foreach(request => {
+          val fileParameters = request.getAllParameters.filter {
+            case param: Parameter =>
+              param.schema.isInstanceOf[FileShape]
+            case payload: Payload if payload.schema.isInstanceOf[NodeShape] =>
+              payload.schema.asInstanceOf[NodeShape].properties.exists(_.range.isInstanceOf[FileShape])
+            case _ => false
+          }
+          fileParameters.headOption.foreach(fileParam => {
+            ctx.violation(
+              InvalidConsumesWithFileParameter,
+              fileParam.id,
+              "consumes must be either 'multipart/form-data', 'application/x-www-form-urlencoded', or both when a file parameter is present",
+              map.key("consumes").getOrElse(map)
+            )
+          })
+        })
+      }
 
       map.key(
         "responses",

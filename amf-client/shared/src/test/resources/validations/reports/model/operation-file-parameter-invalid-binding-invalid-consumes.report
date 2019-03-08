@@ -1,0 +1,14 @@
+Model: file://amf-client/shared/src/test/resources/validations/file-parameter-consumes/binding-path-in-operation.json
+Profile: OAS 2.0
+Conforms? false
+Number of results: 1
+
+Level: Violation
+
+- Source: http://a.ml/vocabularies/amf/parser#invalid-consumes-with-file-parameter
+  Message: consumes must be either 'multipart/form-data', 'application/x-www-form-urlencoded', or both when a file parameter is present
+  Level: Violation
+  Target: file://amf-client/shared/src/test/resources/validations/file-parameter-consumes/binding-path-in-operation.json#/web-api/end-points/%2FaPath/post/request/parameter/file-parameter
+  Property: 
+  Position: Some(LexicalInformation([(10,8)-(10,20)]))
+  Location: file://amf-client/shared/src/test/resources/validations/file-parameter-consumes/binding-path-in-operation.json

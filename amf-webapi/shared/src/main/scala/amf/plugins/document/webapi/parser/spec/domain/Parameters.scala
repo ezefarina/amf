@@ -20,6 +20,8 @@ case class Parameters(query: Seq[Parameter] = Nil,
     )
   }
 
+  def getAll: Seq[DomainElement] = query ++ path ++ header ++ baseUri08 ++ body
+
   def add(inner: Parameters): Parameters = {
     Parameters(
       addParams(query, inner.query),

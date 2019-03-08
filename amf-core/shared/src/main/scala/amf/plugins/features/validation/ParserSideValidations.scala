@@ -490,6 +490,11 @@ object ParserSideValidations extends Validations {
     "Unresolved parameter"
   )
 
+  val InvalidConsumesWithFileParameter = validation(
+    "invalid-consumes-with-file-parameter",
+    "File parameters must have specific consumes property defined"
+  )
+
   val UnableToParseJsonSchema = validation(
     "unable-to-parse-json-schema",
     "Unable to parse json schema"
@@ -698,6 +703,7 @@ object ParserSideValidations extends Validations {
     ExclusiveSchemaType,
     SchemaDeprecated,
     UnresolvedParameter,
+    InvalidConsumesWithFileParameter,
     ParameterNameRequired,
     InvalidSecuredByType,
     InvalidEndpointPath,

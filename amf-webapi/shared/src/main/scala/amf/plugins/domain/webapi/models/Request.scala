@@ -61,6 +61,9 @@ case class Request(fields: Fields, annotations: Annotations) extends DomainEleme
     result
   }
 
+  def getAllParameters: Seq[DomainElement] =
+    queryParameters ++ headers ++ payloads ++ uriParameters ++ cookieParameters
+
   override def meta: Obj = RequestModel
 
   /** Value , path + field value that is used to compose the id when the object its adopted */

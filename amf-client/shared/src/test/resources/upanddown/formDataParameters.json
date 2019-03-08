@@ -15,6 +15,9 @@
   "paths": {
     "/a/{a}": {
       "get": {
+        "consumes": [
+          "multipart/form-data"
+        ],
         "parameters": [
           {
             "$ref": "#/parameters/a"

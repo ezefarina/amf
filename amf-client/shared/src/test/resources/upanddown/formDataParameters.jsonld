@@ -49,6 +49,11 @@
 "@value": "get"
 }
 ],
+"http://a.ml/vocabularies/http#accepts": [
+{
+"@value": "multipart/form-data"
+}
+],
 "http://www.w3.org/ns/hydra/core#expects": [
 {
 "@id": "file://amf-client/shared/src/test/resources/upanddown/formDataParameters.json#/web-api/end-points/%2Fa%2F%7Ba%7D/get/request",
@@ -113,7 +118,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(23,12)-(23,18)]"
+"@value": "[(26,12)-(26,18)]"
 }
 ]
 }
@@ -127,7 +132,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(24,12)-(24,20)]"
+"@value": "[(27,12)-(27,20)]"
 }
 ]
 },
@@ -139,7 +144,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(22,10)-(26,11)]"
+"@value": "[(25,10)-(29,11)]"
 }
 ]
 }
@@ -233,7 +238,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(19,10)-(21,11)]"
+"@value": "[(22,10)-(24,11)]"
 }
 ]
 }
@@ -257,7 +262,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(18,8)-(18,22)]"
+"@value": "[(21,8)-(21,22)]"
 }
 ]
 }
@@ -282,7 +287,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(28,8)-(28,21)]"
+"@value": "[(31,8)-(31,21)]"
 }
 ]
 },
@@ -295,6 +300,18 @@
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
 "@value": "[(17,6)-(17,13)]"
+}
+]
+},
+{
+"http://a.ml/vocabularies/document-source-maps#element": [
+{
+"@value": "http://a.ml/vocabularies/http#accepts"
+}
+],
+"http://a.ml/vocabularies/document-source-maps#value": [
+{
+"@value": "[(18,8)-(18,20)]"
 }
 ]
 }
@@ -356,7 +373,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(15,11)-(31,3)]"
+"@value": "[(15,11)-(34,3)]"
 }
 ]
 },
@@ -380,7 +397,7 @@
 ],
 "http://a.ml/vocabularies/document-source-maps#value": [
 {
-"@value": "[(1,0)-(32,1)]"
+"@value": "[(1,0)-(35,1)]"
 }
 ]
 },

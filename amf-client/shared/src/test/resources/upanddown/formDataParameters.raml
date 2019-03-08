@@ -9,6 +9,8 @@ title: test
 version: "1.0"
 /a/{a}:
   get:
+    (amf-consumes):
+      - multipart/form-data
     body:
       properties:
         theBody?:
