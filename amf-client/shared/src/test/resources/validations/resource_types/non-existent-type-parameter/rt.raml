@@ -1,0 +1,10 @@
+#%RAML 1.0 ResourceType
+get:
+  displayName: Get <<resourcePathName>>
+  description: Get a list of <<resourcePathName>>
+  responses:
+    200:
+      body:
+        application/json:
+          type: <<getResponseType>>
+          example: <<getResponseExample>>

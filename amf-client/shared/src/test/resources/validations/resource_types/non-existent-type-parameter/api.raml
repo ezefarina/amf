@@ -1,0 +1,11 @@
+#%RAML 1.0
+title: test
+
+resourceTypes:
+  collection: !include rt.raml
+
+/dummy:
+  type:
+    collection:
+      getResponseType: nonExistentType
+      getResponseExample: some example

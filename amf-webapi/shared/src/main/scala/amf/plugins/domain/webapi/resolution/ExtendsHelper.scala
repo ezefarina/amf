@@ -112,7 +112,9 @@ object ExtendsHelper {
           (ctxForTrait.declarations.resourceTypes ++ ctxForTrait.declarations.traits).foreach { e =>
             ctx.declarations += e._2
           }
-          ctxForTrait.factory.operationParser(entry, _ => Operation(), true).parse()
+          val operation = ctxForTrait.factory.operationParser(entry, _ => Operation(), true).parse()
+          ctxForTrait.declarations.futureDeclarations.resolve()
+          operation
         }
       }
     checkNoNestedEndpoints(entry, ctx, annotations, extensionId, "trait")
@@ -235,6 +237,8 @@ object ExtendsHelper {
         ctxForTrait.factory
           .endPointParser(entry, _ => EndPoint().withId(extensionId + "/applied"), None, collector, true)
           .parse()
+
+        ctxForTrait.declarations.futureDeclarations.resolve()
       }
     }
 

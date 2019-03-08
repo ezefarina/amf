@@ -168,5 +168,11 @@ class ResolutionReportTest extends ResolutionForUniquePlatformReportTest {
     checkReport("/resource_types/resolved-link-replacement/api.raml")
   }
 
+  // TODO to be un-ignored when issue APIMF-1390 is fixed
+  ignore("Test resource type with invalid type as parameter") {
+    checkReport("/resource_types/non-existent-type-parameter/api.raml",
+                golden = Some("non-existent-type-parameter.report"))
+  }
+
   override val hint: Hint = RamlYamlHint
 }
